@@ -1,0 +1,422 @@
+asyncapi: '2.5.0'
+info:
+  title: Communication Server Template
+  version: '1.0.0'
+  description: |
+    Several events of the template. Clone this [repo](https://github.com/TP-OG/communication-server) and run it on local environment before connecting to the server.
+  license:
+    name: MIT
+    url: https://github.com/TP-OG/communication-server/blob/main/LICENSE
+
+servers:
+  local:
+    url: 127.0.0.1
+    protocol: ws
+    security:
+      - bearerAuth: []
+
+defaultContentType: application/json
+
+components:
+  schemas:
+    # Listened data
+    SendPrivateMessageDto:
+      type: object
+      properties:
+        receiverId:
+          type: integer
+          description: User id of receiver.
+          minimum: 1
+        content:
+          type: string
+          description: Message content.
+          length: 20
+      required:
+        - receiverId
+        - content
+    SendRoomMessageDto:
+      type: object
+      properties:
+        roomId:
+          type: string
+          description: ID of room.
+          minLength: 13
+        content:
+          type: string
+          description: Message content.
+      required:
+        - receiverId
+        - content
+    BookRoomDto:
+      type: object
+      properties:
+        roomId:
+          type: string
+          description: ID of room.
+          minLength: 13
+      required:
+        - roomId
+    JoinRoomDto:
+      type: object
+      properties:
+        roomId:
+          type: string
+          description: ID of room.
+          minLength: 13
+      required:
+        - roomId
+    LeaveRoomDto:
+      type: object
+      properties:
+        roomId:
+          type: string
+          description: ID of room.
+          minLength: 13
+      required:
+        - roomId
+    KickOutOfRoomDto:
+      type: object
+      properties:
+        roomId:
+          type: string
+          description: ID of room.
+          minLength: 13
+        memberId:
+          type: integer
+          description: User id of kicked member.
+          minimum: 1
+      required:
+        - roomId
+        - memberId
+    TransferOwnershipDto:
+      type: object
+      properties:
+        roomId:
+          type: string
+          description: ID of room.
+          minLength: 13
+        candidateId:
+          type: integer
+          description: User id of new owner.
+          minimum: 1
+      required:
+        - roomId
+        - candidateId
+    InviteToRoomDto:
+      type: object
+      properties:
+        roomId:
+          type: string
+          description: ID of room.
+          minLength: 13
+        guestId:
+          type: integer
+          description: User ID of invited user.
+          minimum: 1
+      required:
+        - roomId
+        - guestId
+    RespondRoomInvitationDto:
+      type: object
+      properties:
+        roomId:
+          type: string
+          description: ID of room.
+          minLength: 13
+        isAccpeted:
+          type: boolean
+          description: Accept invitaion or not.
+      required:
+        - roomId
+        - isAccepted
+
+    # Emitted data
+    WsErrorResponse:
+      type: object
+      properties:
+        event:
+          type: string
+          description: Error event name.
+        message:
+          type: string
+          description: Message of the error.
+    SuccessResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Success message.
+    UpdateFriendStatusDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: User ID of friend.
+          minimum: 1
+        status:
+          type: integer
+          description: Status ID.
+    ReceivePrivateMessageDto:
+      type: object
+      properties:
+        senderId:
+          type: integer
+          description: User ID of sender.
+          minimum: 1
+        content:
+          type: string
+          description: Message content.
+    ReceiveRoomMessageDto:
+      type: object
+      properties:
+        roomId:
+          type: string
+          description: ID of room.
+          minLength: 13
+        senderId:
+          type: integer
+          description: User ID of sender.
+          minimum: 1
+        content:
+          type: string
+          description: Message content.
+    ReceiveRoomInvitationDto:
+      type: object
+      properties:
+        roomId:
+          type: string
+          description: ID of room.
+          minLength: 13
+        senderId:
+          type: integer
+          description: User ID of inviter.
+          minimum: 1
+    ReceiveRoomChangesDto:
+      type: object
+      properties:
+        event:
+          type: integer
+          description: ID of room change event.
+        actorId:
+          type: integer
+          description: ID of user making room changing.
+          minimum: 1
+        room:
+          type: object
+          properties:
+            id:
+              type: string
+              description: ID of room.
+              minLength: 13
+            isPublic:
+              type: boolean
+              description: Mark room as public or not
+            ownerId:
+              type: integer
+              description: User ID of room owner.
+              minimum: 1
+            memberIds:
+              type: array
+              description: User IDs of all members in room.
+              items:
+                type: integer
+              minimum: 1
+            waitingIds:
+              type: array
+              description: User IDs of waiting members of room.
+              items:
+                type: integer
+              minimum: 1
+            refusedIds:
+              type: array
+              description: User IDs of left members of room.
+              items:
+                type: integer
+              minimum: 1
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Provide Firebase ID token.
+
+  messageTraits:
+    commonHeaders:
+      headers:
+        type: object
+        properties:
+          Authorization:
+            type: string
+        required: [Authorization]
+
+  messages:
+    # Listend messages
+    SendPrivateMessage:
+      name: send_private_message
+      title: Send private message
+      summary: User sends a message to a friend.
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/SendPrivateMessageDto'
+    SendRoomMessage:
+      name: send_room_message
+      title: Send room message
+      summary: User sends a message to a room.
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/SendRoomMessageDto'
+    BookRoom:
+      name: book_room
+      title: Book room
+      summary: User books an empty room.
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/BookRoomDto'
+    JoinRoom:
+      name: join_room
+      title: Join room
+      summary: User joins to a room.
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/JoinRoomDto'
+    LeaveRoom:
+      name: leave_room
+      title: Leave room
+      summary: User leaves a joined room.
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/LeaveRoomDto'
+    KickOutOfRoom:
+      name: kick_out_of_room
+      title: Kick out of room
+      summary: Owner kicks a member out of room.
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/KickOutOfRoomDto'
+    TransferOwnership:
+      name: transfer_ownership
+      title: Transfer ownership
+      summary: Owner transfer the ownership to a member in room.
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/TransferOwnershipDto'
+    InviteToRoom:
+      name: invite_to_room
+      title: Invite to room
+      summary: Invite a user to a room.
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/InviteToRoomDto'
+    RespondRoomInvitation:
+      name: respond_room_invitation
+      title: Respond room invitation
+      summary: User accepts or rejects a room invitation.
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/RespondRoomInvitationDto'
+
+    # Emitted messages
+    Error:
+      name: error
+      title: Error
+      summary: Error of emitted event.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/WsErrorResponse'
+    Success:
+      name: success
+      title: Success
+      summary: Notify a success.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SuccessResponse'
+    UpdateFriendStatus:
+      name: update_friend_status
+      title: Update friend status
+      summary: Update status of friend.
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/UpdateFriendStatusDto'
+    ReceivePrivateMessage:
+      name: receive_private_message
+      title: Receive private message
+      summary: Receive a private message from friend.
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/ReceivePrivateMessageDto'
+    ReceiveRoomMessage:
+      name: receive_room_message
+      title: Receive room message
+      summary: Receive a message from room.
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/ReceiveRoomMessageDto'
+    ReceiveRoomInvitation:
+      name: receive_room_invitation
+      title: Receive room invitation
+      summary: Receive a room invitation from user.
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/ReceiveRoomInvitationDto'
+    ReceiveRoomChanges:
+      name: receive_room_changes
+      title: Receive room changes
+      summary: Receive room changing of joined room.
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/ReceiveRoomChangesDto'
+
+channels:
+  /:
+    publish:
+      message:
+        oneOf:
+          - $ref: '#/components/messages/SendPrivateMessage'
+          - $ref: '#/components/messages/SendRoomMessage'
+          - $ref: '#/components/messages/BookRoom'
+          - $ref: '#/components/messages/JoinRoom'
+          - $ref: '#/components/messages/LeaveRoom'
+          - $ref: '#/components/messages/TransferOwnership'
+          - $ref: '#/components/messages/KickOutOfRoom'
+          - $ref: '#/components/messages/InviteToRoom'
+          - $ref: '#/components/messages/RespondRoomInvitation'
+
+    subscribe:
+      message:
+        oneOf:
+          - $ref: '#/components/messages/Error'
+          - $ref: '#/components/messages/Success'
+          - $ref: '#/components/messages/UpdateFriendStatus'
+          - $ref: '#/components/messages/ReceivePrivateMessage'
+          - $ref: '#/components/messages/ReceiveRoomMessage'
+          - $ref: '#/components/messages/ReceiveRoomInvitation'
+          - $ref: '#/components/messages/ReceiveRoomChanges'

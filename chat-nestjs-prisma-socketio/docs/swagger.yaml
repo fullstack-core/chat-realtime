@@ -1,0 +1,190 @@
+openapi: 3.0.0
+info:
+  title: Communication Server Template
+  description: Several API endpoints of the template. Clone this [repo](https://github.com/TP-OG/communication-server) and run it on local environment before accessing API endpoints.
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://github.com/tp-og/communication-server/blob/main/LICENSE
+tags:
+  - name: users
+  - name: rooms
+servers:
+  - url: http://127.0.0.1:{port}/api/v1
+    description: Localhost
+    variables:
+      port:
+        default: '80'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: token
+  schemas: {}
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/users/friends:
+    get:
+      operationId: UserFriendList
+      summary: Get friend list of logged in user
+      parameters: []
+      responses:
+        '200':
+          description: 'Success'
+      tags:
+        - users
+
+  /api/v1/rooms:
+    delete:
+      operationId: deleteRooms
+      summary: Delete many rooms at once
+      parameters:
+        - name: ids
+          in: query
+          description: ID of removed rooms
+          required: true
+          schema:
+            type: array
+            items:
+              type: integer
+      responses:
+        '200':
+          description: 'Success'
+      tags:
+        - rooms
+
+  /api/v1/rooms/temporarily:
+    post:
+      operationId: createTemporaryRooms
+      summary: Create many temporary rooms at once
+      parameters:
+        - name: rooms
+          in: query
+          description: List of new temporary rooms
+          required: true
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                isPublic:
+                  type: boolean
+                ownerId:
+                  type: integer
+                memberIds:
+                  type: array
+                  items:
+                    type: integer
+              required:
+                - isPublic
+                - memberIds
+      responses:
+        '201':
+          description: 'Success'
+      tags:
+        - rooms
+
+  /api/v1/rooms/persistent:
+    post:
+      operationId: createPersistentRooms
+      summary: Delete many persistent rooms at once
+      parameters:
+        - name: rooms
+          in: query
+          description: List of new persistent rooms
+          required: true
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                isMuted:
+                  type: boolean
+                memberIds:
+                  type: array
+                  items:
+                    type: integer
+              required:
+                - id
+                - memberIds
+      responses:
+        '201':
+          description: 'Success'
+      tags:
+        - rooms
+
+  /api/v1/rooms/mute:
+    post:
+      operationId: muteRoom
+      summary: Mute or unmute a room
+      parameters:
+        - name: roomId
+          in: query
+          description: ID of muted or unmuted room
+          required: true
+          schema:
+            type: string
+        - name: mute
+          in: query
+          description: Decide to mute or unmute
+          required: true
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: 'Success'
+      tags:
+        - rooms
+
+  /api/v1/rooms/members:
+    post:
+      operationId: addMembersToRoom
+      summary: Add members to room
+      parameters:
+        - name: roomId
+          in: query
+          description: ID of containing-members room
+          required: true
+          schema:
+            type: string
+        - name: memberIds
+          in: query
+          description: ID of added members
+          required: true
+          schema:
+            type: array
+            items:
+              type: integer
+      responses:
+        '200':
+          description: 'Success'
+      tags:
+        - rooms
+
+    delete:
+      operationId: removeMembersFromRoom
+      summary: Remove members from room
+      parameters:
+        - name: roomId
+          in: query
+          description: ID of containing-members room
+          required: true
+          schema:
+            type: string
+        - name: memberIds
+          in: query
+          description: ID of removed members
+          required: true
+          schema:
+            type: array
+            items:
+              type: integer
+      responses:
+        '200':
+          description: 'Success'
+      tags:
+        - rooms
