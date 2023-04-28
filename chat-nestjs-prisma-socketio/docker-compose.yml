@@ -1,0 +1,76 @@
+version: "3.8"
+
+services:
+    app:
+        build:
+            context: .
+        image: communication-server
+        env_file:
+            - .env
+        volumes:
+            - ./:/app
+        ports:
+            - 3000:${APP_PORT}
+        entrypoint:
+            - /bin/sh
+        command:
+            - -c
+            - npm run start:dev
+        networks:
+            - postgres-network
+            - redis-network
+        depends_on:
+            - postgres
+            - redis
+        restart: unless-stopped
+
+    postgres:
+        image: postgres:14.1-alpine3.15
+        environment:
+            - POSTGRES_DB=${DATABASE_DB}
+            - POSTGRES_USER=${DATABASE_USERNAME}
+            - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+        volumes:
+            - ./.docker/postgres/data:/var/lib/postgresql/data
+        networks:
+            - postgres-network
+        restart: unless-stopped
+
+    adminer:
+        image: dockette/adminer:pgsql
+        ports:
+        - 8081:80
+        networks:
+            - postgres-network
+        depends_on:
+            - postgres
+        restart: unless-stopped
+
+    redis:
+        image: redis:6.2.5-alpine3.14
+        environment:
+            - REDIS_PASSWORD=${REDIS_PASSWORD}
+        volumes:
+          - ./.docker/redis/data:/data
+        command: redis-server --requirepass ${REDIS_PASSWORD}
+        networks:
+            - redis-network
+        restart: unless-stopped
+
+    redis-commander:
+        image: rediscommander/redis-commander:latest
+        environment:
+            REDIS_HOST: ${REDIS_HOST}
+            REDIS_PORT: ${REDIS_PORT}
+            REDIS_PASSWORD: ${REDIS_PASSWORD}
+        ports:
+            - 8082:8081
+        networks:
+            - redis-network
+        depends_on:
+            - redis
+        restart: unless-stopped
+
+networks:
+    postgres-network:
+    redis-network:

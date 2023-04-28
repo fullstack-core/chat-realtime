@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               Int                  @id @default(autoincrement())
+  fid              String               @unique @db.VarChar(28)
+  username         String               @unique @db.VarChar(16)
+  statusId         Int?                 @map("status_id")
+  acceptedFriends  FriendRelationship[] @relation("inviter")
+  invitedFriends   FriendRelationship[] @relation("acceptor")
+  sentMessages     PrivateMessage[]     @relation("sender")
+  receivedMessages PrivateMessage[]     @relation("receiver")
+  status           Status?              @relation(fields: [statusId], references: [id])
+  roomMessages     RoomMessage[]
+
+  @@map("users")
+}
+
+model FriendRelationship {
+  inviterId  Int  @map("inviter_id")
+  acceptorId Int  @map("acceptor_id")
+  inviter    User @relation(name: "inviter", fields: [inviterId], references: [id])
+  acceptor   User @relation(name: "acceptor", fields: [acceptorId], references: [id])
+
+  @@unique([inviterId, acceptorId])
+  @@map("friend_relationships")
+}
+
+model PrivateMessage {
+  id         Int      @id @default(autoincrement())
+  senderId   Int      @map("sender_id")
+  receiverId Int      @map("receiver_id")
+  content    String
+  createdAt  DateTime @default(now()) @map("created_at")
+  sender     User     @relation(name: "sender", fields: [senderId], references: [id])
+  receiver   User     @relation(name: "receiver", fields: [receiverId], references: [id])
+
+  @@map("private_messages")
+}
+
+model Status {
+  id   Int    @id @default(autoincrement())
+  name String @unique @db.VarChar(16)
+  User User[]
+
+  @@map("active status")
+}
+
+model Game {
+  id        Int       @id @default(autoincrement())
+  chatRooms ChatRoom?
+
+  @@map("games")
+}
+
+model ChatRoom {
+  id           Int           @id
+  createdAt    DateTime      @default(now()) @map("created_at")
+  game         Game          @relation(fields: [id], references: [id])
+  roomMessages RoomMessage[]
+
+  @@map("chat_rooms")
+}
+
+model RoomMessage {
+  id        Int      @id @default(autoincrement())
+  roomId    Int      @map("room_id")
+  senderId  Int      @map("sender_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  room      ChatRoom @relation(fields: [roomId], references: [id])
+  sender    User     @relation(fields: [senderId], references: [id])
+
+  @@map("room_messages")
+}
